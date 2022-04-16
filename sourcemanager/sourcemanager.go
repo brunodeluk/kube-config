@@ -22,7 +22,7 @@ func (sm *SourceManager) FetchAll(ctx context.Context) []error {
 	var wg sync.WaitGroup
 	wg.Add(len(sm.sources))
 
-	errors := make([]error, len(sm.sources))
+	errors := make([]error, 0)
 
 	for _, src := range sm.sources {
 		go func(src source.Source) {
