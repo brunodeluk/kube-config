@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/brunodeluk/kube-config/configmanager/cluster"
+	"github.com/brunodeluk/kube-config/configmanager/client"
 	"github.com/brunodeluk/kube-config/sourcemanager"
 	"github.com/brunodeluk/kube-config/sourcemanager/source"
 	"k8s.io/utils/env"
@@ -27,7 +27,7 @@ func main() {
 	}
 
 	for _, path := range paths {
-		k8s := cluster.Kubernetes{}
+		k8s := client.Kubernetes{}
 		err := k8s.Apply(context.Background(), path)
 		if err != nil {
 			fmt.Println(err)

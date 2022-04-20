@@ -1,7 +1,7 @@
-package cluster
+package client
 
 import "context"
 
-type Cluster interface {
+type Client interface {
 	Apply(ctx context.Context, path string) error
 }

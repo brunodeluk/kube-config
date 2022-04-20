@@ -2,13 +2,13 @@ package configmanager
 
 import (
 	"context"
-	"github.com/brunodeluk/kube-config/configmanager/cluster"
+	"github.com/brunodeluk/kube-config/configmanager/client"
 )
 
 type ConfigManager struct {
-	Cluster cluster.Cluster
+	Client client.Client
 }
 
 func (cm *ConfigManager) Apply(ctx context.Context, path string) error {
-	return cm.Cluster.Apply(ctx, path)
+	return cm.Client.Apply(ctx, path)
 }
