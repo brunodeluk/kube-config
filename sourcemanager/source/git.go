@@ -7,21 +7,23 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"os"
+	"path/filepath"
 )
 
 type Git struct {
 	Token  string
 	URL    string
 	Branch string
+	Dir    string
 }
 
-func (g *Git) Fetch(ctx context.Context) error {
+func (g *Git) Fetch(ctx context.Context) (string, error) {
 	fmt.Printf("Cloning %s repo...\n", g.URL)
 	wd, _ := os.Getwd()
 	path, err := os.MkdirTemp(wd, "repo")
 	if err != nil {
 		os.RemoveAll(path)
-		return err
+		return "", err
 	}
 
 	_, err = gitclient.PlainCloneContext(ctx, path, false, &gitclient.CloneOptions{
@@ -39,5 +41,5 @@ func (g *Git) Fetch(ctx context.Context) error {
 	})
 
 	fmt.Printf("finished cloning %s repo\n", g.URL)
-	return err
+	return filepath.Join(path, g.Dir), err
 }
