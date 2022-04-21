@@ -8,7 +8,9 @@ import (
 	"io/fs"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/rest"
 	"os"
 	"path/filepath"
 )
@@ -19,6 +21,36 @@ type Kubernetes struct {
 func (k *Kubernetes) Apply(ctx context.Context, path string) error {
 	objects, err := filesToObjects(path)
 	fmt.Printf("read %d objects", len(objects))
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+
+	client, err := rest.RESTClientFor(config)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("starting applying process")
+	for i, obj := range objects {
+		fmt.Printf("Applying manifest %d...\n", i+1)
+		applyObject := obj.DeepCopy()
+		b, err := applyObject.MarshalJSON()
+		if err != nil {
+			return err
+		}
+
+		req := client.
+			Patch(types.ApplyPatchType).
+			Body(b).
+			Do(ctx)
+
+		if req.Error() != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
