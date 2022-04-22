@@ -6,17 +6,17 @@ import (
 	"github.com/brunodeluk/kube-config/configmanager/client"
 	"github.com/brunodeluk/kube-config/sourcemanager"
 	"github.com/brunodeluk/kube-config/sourcemanager/source"
-	"k8s.io/utils/env"
+	"os"
 )
 
 func main() {
 	sm := sourcemanager.New()
 
 	sm.Add(&source.Git{
-		Token:  env.GetString("git_token", ""),
-		URL:    "https://github.com/kubernetes/examples.git",
-		Branch: "master",
-		Dir:    "guestbook/all-in-one",
+		Token:  os.Getenv("git_token"),
+		URL:    os.Getenv("url"),
+		Branch: os.Getenv("branch"),
+		Dir:    os.Getenv("dir"),
 	})
 
 	paths, errors := sm.FetchAll(context.Background())
