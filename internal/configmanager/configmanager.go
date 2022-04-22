@@ -2,7 +2,7 @@ package configmanager
 
 import (
 	"context"
-	"github.com/brunodeluk/kube-config/configmanager/client"
+	"github.com/brunodeluk/kube-config/internal/configmanager/client"
 )
 
 type ConfigManager struct {

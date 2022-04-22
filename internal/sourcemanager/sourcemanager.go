@@ -2,7 +2,7 @@ package sourcemanager
 
 import (
 	"context"
-	"github.com/brunodeluk/kube-config/sourcemanager/source"
+	"github.com/brunodeluk/kube-config/internal/sourcemanager/source"
 	"sync"
 )
 

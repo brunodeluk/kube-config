@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/brunodeluk/kube-config/configmanager/client"
-	"github.com/brunodeluk/kube-config/sourcemanager"
-	"github.com/brunodeluk/kube-config/sourcemanager/source"
+	"github.com/brunodeluk/kube-config/internal/configmanager/client"
+	"github.com/brunodeluk/kube-config/internal/sourcemanager"
+	"github.com/brunodeluk/kube-config/internal/sourcemanager/source"
 	"os"
 )
 
