@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/pkg/apis/clientauthentication/v1alpha1"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	"os"
 	"path/filepath"
 )
@@ -23,51 +23,60 @@ type Kubernetes struct {
 
 func (k *Kubernetes) Apply(ctx context.Context, path string) error {
 	objects, err := filesToObjects(path)
-	fmt.Printf("read %d objects", len(objects))
+	fmt.Printf("[client][kube-client][INFO] read %d objects\n", len(objects))
+	fmt.Printf("[client][kube-client][INFO] configuring rest client...\n")
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
+		fmt.Printf("[client][kube-client][ERROR] configuring rest client\n")
 		return err
 	}
 
-	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
-	config.APIPath = "/apis"
-	config.UserAgent = rest.DefaultKubernetesUserAgent()
-	config.ContentConfig.GroupVersion = &schema.GroupVersion{
-		Group:   v1alpha1.GroupName,
-		Version: v1alpha1.SchemeGroupVersion.Version,
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		fmt.Printf("[client][kube-client][ERROR] configuring creating rest client\n")
+		return err
 	}
 
-	client, err := rest.RESTClientFor(config)
+	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("starting applying process")
-	for i, obj := range objects {
-		fmt.Printf("Applying manifest %d...\n", i+1)
+	groupResource, err := restmapper.GetAPIGroupResources(clientSet)
+	if err != nil {
+		return err
+	}
+
+	rm := restmapper.NewDiscoveryRESTMapper(groupResource)
+
+	fmt.Printf("[client][kube-client][INFO] applying objects...\n")
+	for _, obj := range objects {
 		applyObject := obj.DeepCopy()
-		b, err := applyObject.MarshalJSON()
+
+		mapping, _ := rm.RESTMapping(obj.GroupVersionKind().GroupKind(), obj.GroupVersionKind().Version)
+
+		res, err := client.
+			Resource(mapping.Resource).
+			Namespace(obj.GetNamespace()).
+			Create(ctx, applyObject, v1.CreateOptions{})
+
 		if err != nil {
+			fmt.Printf("[client][kube-client][ERROR] creating object %v: %s\n", obj.GetKind(), err.Error())
 			return err
 		}
 
-		req := client.
-			Patch(types.ApplyPatchType).
-			Body(b).
-			Do(ctx)
-
-		if req.Error() != nil {
-			return err
-		}
+		fmt.Printf("[client][kube-client][INFO] created %s\n", res.GetName())
 	}
 
 	return err
 }
 
 func filesToObjects(path string) ([]*unstructured.Unstructured, error) {
+	fmt.Printf("[client][kube-client][INFO] transforming yaml files to objects\n")
 	info, err := os.Stat(path)
 	if err != nil {
+		fmt.Printf("[client][kube-client][ERROR] error with os.Stat\n")
 		return nil, err
 	}
 
@@ -80,6 +89,7 @@ func filesToObjects(path string) ([]*unstructured.Unstructured, error) {
 			}
 			objs, err := readObjects(filepath)
 			if err != nil {
+				fmt.Printf("[client][kube-client][ERROR] reading object\n")
 				return err
 			}
 
@@ -90,6 +100,7 @@ func filesToObjects(path string) ([]*unstructured.Unstructured, error) {
 			return err
 		})
 		if err != nil {
+			fmt.Printf("[client][kube-client][ERROR] walking through dir\n")
 			return nil, err
 		}
 
@@ -98,14 +109,17 @@ func filesToObjects(path string) ([]*unstructured.Unstructured, error) {
 
 	objects, err = readObjects(path)
 	if err != nil {
+		fmt.Printf("[client][kube-client][ERROR] reading single object\n")
 		return nil, err
 	}
 	return objects, nil
 }
 
 func readObjects(yamlFile string) ([]*unstructured.Unstructured, error) {
+	fmt.Printf("[client][kube-client][INFO] reading yaml file %s\n", yamlFile)
 	file, err := os.Open(yamlFile)
 	if err != nil {
+		fmt.Printf("[client][kube-client][ERROR] error opening yaml file %s\n", yamlFile)
 		return nil, err
 	}
 
@@ -132,6 +146,7 @@ func readObjects(yamlFile string) ([]*unstructured.Unstructured, error) {
 				return nil
 			})
 			if err != nil {
+				fmt.Printf("[client][kube-client][ERROR] applying func to item\n")
 				return objects, err
 			}
 			continue
