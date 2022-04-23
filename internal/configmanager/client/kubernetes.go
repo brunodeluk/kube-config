@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/pkg/apis/clientauthentication/v1alpha1"
 	"k8s.io/client-go/rest"
 	"os"
@@ -29,6 +30,9 @@ func (k *Kubernetes) Apply(ctx context.Context, path string) error {
 		return err
 	}
 
+	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	config.APIPath = "/apis"
+	config.UserAgent = rest.DefaultKubernetesUserAgent()
 	config.ContentConfig.GroupVersion = &schema.GroupVersion{
 		Group:   v1alpha1.GroupName,
 		Version: v1alpha1.SchemeGroupVersion.Version,
