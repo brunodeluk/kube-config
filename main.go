@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	fmt.Printf("[main][INFO] executing kube-config\n")
 	sm := sourcemanager.New()
 
 	sm.Add(&source.Git{
@@ -22,15 +23,17 @@ func main() {
 	paths, errors := sm.FetchAll(context.Background())
 	if len(errors) > 0 {
 		for _, err := range errors {
-			fmt.Println(err)
+			fmt.Printf("[main][sourcemanager][ERROR] %v\n", err)
 		}
+		os.Exit(1)
 	}
 
 	for _, path := range paths {
 		k8s := client.Kubernetes{}
 		err := k8s.Apply(context.Background(), path)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("[main][kube-client][ERROR] %v\n", err)
+			os.Exit(1)
 		}
 	}
 }
