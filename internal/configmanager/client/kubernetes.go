@@ -8,8 +8,10 @@ import (
 	"io/fs"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/pkg/apis/clientauthentication/v1alpha1"
 	"k8s.io/client-go/rest"
 	"os"
 	"path/filepath"
@@ -25,6 +27,11 @@ func (k *Kubernetes) Apply(ctx context.Context, path string) error {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return err
+	}
+
+	config.ContentConfig.GroupVersion = &schema.GroupVersion{
+		Group:   v1alpha1.GroupName,
+		Version: v1alpha1.SchemeGroupVersion.Version,
 	}
 
 	client, err := rest.RESTClientFor(config)
