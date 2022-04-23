@@ -18,7 +18,7 @@ type Git struct {
 }
 
 func (g *Git) Fetch(ctx context.Context) (string, error) {
-	fmt.Printf("Cloning %s repo...\n", g.URL)
+	fmt.Printf("[source][git][INFO] cloning %s \n", g.URL)
 	wd, _ := os.Getwd()
 	path, err := os.MkdirTemp(wd, "repo")
 	if err != nil {
@@ -40,6 +40,6 @@ func (g *Git) Fetch(ctx context.Context) (string, error) {
 		Progress:   nil,
 	})
 
-	fmt.Printf("finished cloning %s repo\n", g.URL)
+	fmt.Printf("[source][git][INFO] finished cloning %s \n", g.URL)
 	return filepath.Join(path, g.Dir), err
 }
