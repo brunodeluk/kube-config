@@ -30,6 +30,6 @@ spec:
             value: "master"
           - name: dir
             value: "workloads"
-        imagePullPolicy: always
+        imagePullPolicy: Always
       terminationGracePeriodSeconds: 10
       serviceAccountName: kube-config
